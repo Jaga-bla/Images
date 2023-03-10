@@ -5,6 +5,7 @@ from rest_framework.reverse import reverse
 from rest_framework.exceptions import APIException
 from rest_framework.fields import CurrentUserDefault
 
+
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image

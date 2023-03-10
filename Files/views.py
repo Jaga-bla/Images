@@ -29,11 +29,8 @@ def get_image(image_pk):
 
 class UserImageView(APIView):
     """
-    Images list entrypoint.
-    - `GET` method selects user images from the database. 
-    - `POST` adds new image.
+    Images list entrypoint. - `GET` method selects user images from the database. - `POST` adds new image.
     """
-    # permission_classes = [HasExpirationLinkPermission, HasOriginalLinkPermission]
     
     serializer_class = ImageSerializer
     def get(self, request, format=None):
@@ -54,8 +51,10 @@ def imageURLView(request,image_pk, format=None):
 
     - `GET` method returns image thumbnail with specific height.
     """
-
-    image = Image.objects.get(pk=image_pk)
+    try:
+        image = Image.objects.get(pk=image_pk, user = request.user)
+    except Exception as e:
+        raise APIException('You are not allowed to this image')
     tb_200_px = None
     tb_400_px = None
     custom_tb = None
@@ -92,6 +91,11 @@ def image_preview_view(request, size, image_pk):
 
     - `GET` method returns image thumbnail with specific height.
     """
+    try:
+        image = Image.objects.get(pk=image_pk, user = request.user)
+    except Exception as e:
+        raise APIException('You are not allowed to this image')
+    
     if request.method == 'GET':
         serializer = ImagePreviewSerializer(data={'size': size}, context = {'request': request})
  

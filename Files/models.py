@@ -3,9 +3,14 @@ from django.contrib.auth.models import User
 from PIL import Image as Pil_img
 import os
 from django.conf import settings
+from datetime import datetime
+
 
 def get_user_dir_path(instance):
     return '{}/{}/{}'.format(settings.MEDIA_ROOT,'files',instance.user.username)
+
+def get_expiring_dir_path(filename):
+    return '{}/{}/{}/{}'.format(settings.MEDIA_ROOT,'files','expiring',filename)
 
 def get_image_path(instance, filename):
     username = instance.user.username
@@ -51,3 +56,23 @@ class Image(models.Model):
         image.close()
         
         return thumbnail_name_with_path
+    
+    
+class ExpiringImage(models.Model):
+    file = models.ImageField(upload_to=get_expiring_dir_path, blank=False, null=True)
+    creation_date = models.DateTimeField()
+    time_delta = models.PositiveIntegerField(min_length = 300, max_length=30000)
+    
+    @staticmethod
+    def create(timedelta, image):
+        ExpiringImage.objects.create(file = image.file, time_delta = timedelta, creation_date = datetime.now())
+    
+    def delete_expiring_image(self):
+        self.file.delete()
+    
+    def check_expiration(self):
+        if self.creation_date + datetime.timedelta(seconds=self.time_delta) >= datetime.now():
+            self.delete_expiring_image()
+            return True
+        else:
+            return False
