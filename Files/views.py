@@ -1,5 +1,5 @@
-from .models import Image
-from .serializers import ImageSerializer, ImagePreviewSerializer,ImageURLsSerializer
+from .models import Image, get_image_path
+from .serializers import ImageSerializer, ImagePreviewSerializer
 from rest_framework.response import Response
 from django.http import FileResponse
 from rest_framework.views import APIView
@@ -9,7 +9,8 @@ from rest_framework.decorators import api_view, authentication_classes, \
     permission_classes
 from rest_framework.reverse import reverse
 from django.conf import settings
-from .permissions import HasThumbnailPermission, HasExpirationLinkPermission, HasOriginalLinkPermission
+from .permissions import HasExpirationLinkPermission, HasOriginalLinkPermission
+from django.http import HttpResponseRedirect
 
 def get_image(image_pk):
     """
@@ -32,8 +33,8 @@ class UserImageView(APIView):
     - `GET` method selects user images from the database. 
     - `POST` adds new image.
     """
-    permission_classes = [HasThumbnailPermission(200), HasExpirationLinkPermission, HasOriginalLinkPermission]
-
+    # permission_classes = [HasExpirationLinkPermission, HasOriginalLinkPermission]
+    
     serializer_class = ImageSerializer
     def get(self, request, format=None):
         images = Image.objects.filter(user = request.user)
@@ -41,11 +42,10 @@ class UserImageView(APIView):
         return Response(serializer.data)
         
     def post(self, request, *args, **kwargs):
-        images = Image.objects.filter(user = request.user)
-        serializer = ImageSerializer(images,context={'request': request}, many=True)
         image = request.data['file']
-        Image.objects.create(file=image, user = request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        image = Image.objects.create(file=image, user = request.user)
+        
+        return HttpResponseRedirect(redirect_to=reverse('url-list', kwargs={'image_pk':image.pk}))
     
 @api_view(['GET'])
 def imageURLView(request,image_pk, format=None):
@@ -54,15 +54,38 @@ def imageURLView(request,image_pk, format=None):
 
     - `GET` method returns image thumbnail with specific height.
     """
-    return Response({
-        "thumbnail that's 200px in height": reverse('thumbnail-url', kwargs={'size': 200, 'image_pk':image_pk},request=request, format=format),
-        "thumbnail that's 400px in height": reverse('thumbnail-url', kwargs={'size': 400, 'image_pk':image_pk},request=request, format=format),
-    })
+
+    image = Image.objects.get(pk=image_pk)
+    tb_200_px = None
+    tb_400_px = None
+    custom_tb = None
+    original_link = None
+    for thumnail_option in request.user.profile.permission.thumbnail_option.all():
+        if thumnail_option.size == 200:
+            tb_200_px = reverse('thumbnail-url', kwargs={'size': 200, 'image_pk':image_pk},request=request, format=format)
+        if thumnail_option.size == 400:
+            tb_400_px = reverse('thumbnail-url', kwargs={'size': 400, 'image_pk':image_pk},request=request, format=format)
+        if thumnail_option.size == 1:
+            custom_tb = reverse('thumbnail-url', kwargs={'size': 1, 'image_pk':image_pk},request=request, format=format)    
+    if request.user.profile.permission.org_link:
+        original_link = request.build_absolute_uri(image.file.url)
         
+    data = {
+        "thumbnail that's 200px in height": 
+            tb_200_px,
+        "thumbnail that's 400px in height": 
+            tb_400_px,
+        "thumbnail with custom height": 
+            custom_tb,
+        "original link": 
+            original_link,
+        "expiring link": 
+            reverse('exp-link'),
+    }
+    
+    return Response(data)
     
 @api_view(['GET'])
-@authentication_classes([])
-@permission_classes([HasThumbnailPermission(200), HasExpirationLinkPermission, HasOriginalLinkPermission])
 def image_preview_view(request, size, image_pk):
     """
     Image preview (thumbnail) entrypoint.
@@ -70,7 +93,7 @@ def image_preview_view(request, size, image_pk):
     - `GET` method returns image thumbnail with specific height.
     """
     if request.method == 'GET':
-        serializer = ImagePreviewSerializer(data={'size': size})
+        serializer = ImagePreviewSerializer(data={'size': size}, context = {'request': request})
  
         if serializer.is_valid():
 
@@ -82,3 +105,7 @@ def image_preview_view(request, size, image_pk):
                   raise APIException('Cannot resize image')
             return FileResponse(resized_image)
         return Response(serializer.errors, status=status.HTTP_200_OK)
+    
+@api_view(['GET'])
+def expiring_link_view():
+    pass

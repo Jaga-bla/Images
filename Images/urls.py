@@ -32,4 +32,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('image/url/<int:image_pk>/', views.imageURLView, name = 'url-list'),
     path('images/', views.UserImageView.as_view()),
+    path('exp/link/', views.expiring_link_view, name = 'exp-link'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
