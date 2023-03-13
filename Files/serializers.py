@@ -1,4 +1,4 @@
-from .models import Image
+from .models import Image, ExpiringImage
 from rest_framework import serializers
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.reverse import reverse
@@ -25,3 +25,8 @@ class ImagePreviewSerializer(serializers.Serializer):
             if data['size'] == thumbnail_size.size:
                 return data
         raise serializers.ValidationError('You do not have a permissions to access this thumbnail.')
+    
+class ExpiringImageSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = ExpiringImage
+            fields =  ['time_delta']

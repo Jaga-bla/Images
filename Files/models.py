@@ -3,14 +3,15 @@ from django.contrib.auth.models import User
 from PIL import Image as Pil_img
 import os
 from django.conf import settings
-from datetime import datetime
-
+from datetime import timedelta
+from django.utils import timezone
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 def get_user_dir_path(instance):
     return '{}/{}/{}'.format(settings.MEDIA_ROOT,'files',instance.user.username)
 
-def get_expiring_dir_path(filename):
-    return '{}/{}/{}/{}'.format(settings.MEDIA_ROOT,'files','expiring',filename)
+def get_expiring_dir_path(instance, filename):
+    return '{}/{}/{}'.format(settings.MEDIA_ROOT,'expiring',filename)
 
 def get_image_path(instance, filename):
     username = instance.user.username
@@ -21,12 +22,19 @@ def get_image_path(instance, filename):
 
 
 class Image(models.Model):
-    user = models.ForeignKey(User, on_delete= models.CASCADE)
-    file = models.ImageField(upload_to=get_image_path, blank=False, null=False)
+    user = models.ForeignKey(
+        User, 
+        on_delete= models.CASCADE
+        )
+    file = models.ImageField(
+        upload_to=get_image_path, 
+        blank=False, 
+        null=False
+        )
     
     def get_thumbnail_name(self, size):
         """
-        Generates and returns name for the thumbnail image. Returns tuple
+        Generates and returns name for the thumbnail image. Returns 2 variables
         where first item is thumbnail file name and second is extension.
         """
         basename = os.path.basename(self.file.name)
@@ -59,20 +67,36 @@ class Image(models.Model):
     
     
 class ExpiringImage(models.Model):
-    file = models.ImageField(upload_to=get_expiring_dir_path, blank=False, null=True)
-    creation_date = models.DateTimeField()
-    time_delta = models.PositiveIntegerField(min_length = 300, max_length=30000)
     
-    @staticmethod
-    def create(timedelta, image):
-        ExpiringImage.objects.create(file = image.file, time_delta = timedelta, creation_date = datetime.now())
+    original_image = models.OneToOneField(
+        Image, 
+        on_delete=models.CASCADE, 
+        related_name='expiringimage'
+        )
+    file = models.ImageField(
+        upload_to=get_expiring_dir_path,
+        blank=False, 
+        null=True
+        )
+    creation_date = models.DateTimeField(
+        default=timezone.now()
+        )
+    time_delta = models.IntegerField(
+        default=300,
+        validators=[
+            MaxValueValidator(30000),
+            MinValueValidator(300)
+            ]
+        )
     
-    def delete_expiring_image(self):
-        self.file.delete()
-    
-    def check_expiration(self):
-        if self.creation_date + datetime.timedelta(seconds=self.time_delta) >= datetime.now():
-            self.delete_expiring_image()
+    @property
+    def is_expired(self):
+        if self.creation_date + timedelta(seconds=self.time_delta) <= timezone.now():
             return True
         else:
             return False
+        
+    def get_formatted_exp_time(self):
+        date = self.creation_date + timedelta(seconds=self.time_delta)
+        formatedDate = date.strftime("%Y-%m-%d %H:%M:%S")
+        return formatedDate

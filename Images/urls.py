@@ -30,7 +30,7 @@ urlpatterns = [
     path('images/<int:size>/<int:image_pk>/', views.image_preview_view, name = 'thumbnail-url'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('admin/', admin.site.urls),
-    path('image/url/<int:image_pk>/', views.imageURLView, name = 'url-list'),
+    path('image/url/<int:image_pk>/', views.ImageUrlView.as_view(), name = 'url-list'),
     path('images/', views.UserImageView.as_view()),
-    path('exp/link/', views.expiring_link_view, name = 'exp-link'),
+    path('image/exp/link/<int:image_pk>/', views.image_exp_link_view, name = 'exp-link'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
