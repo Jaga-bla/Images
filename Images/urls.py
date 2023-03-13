@@ -17,7 +17,6 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
-from Files import views
 from rest_framework.schemas import get_schema_view
 
 
@@ -27,10 +26,7 @@ urlpatterns = [
         description="Simple API for the Images.",
         version="Test version for recuitement process"
     ), name='openapi-schema'),
-    path('images/<int:size>/<int:image_pk>/', views.image_preview_view, name = 'thumbnail-url'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('admin/', admin.site.urls),
-    path('image/url/<int:image_pk>/', views.ImageUrlView.as_view(), name = 'url-list'),
-    path('images/', views.UserImageView.as_view()),
-    path('image/exp/link/<int:image_pk>/', views.image_exp_link_view, name = 'exp-link'),
+    path('images/', include('Files.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

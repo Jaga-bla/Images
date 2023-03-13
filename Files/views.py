@@ -5,9 +5,14 @@ from django.http import FileResponse
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException, NotFound
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, authentication_classes, \
+    permission_classes
 from rest_framework.reverse import reverse
 from django.http import HttpResponseRedirect
+from .permissions import (HasExpirationLinkPermission, 
+                          HasOriginalLinkPermission, 
+                          has_thumbnail_permission, 
+                          custom_thumnail_permission)
 
 def get_image_if_owner(request, image_pk):
     """
@@ -25,32 +30,32 @@ def get_image_if_owner(request, image_pk):
         raise APIException("You are not allowed to this file")
     return image
 
-def get_urls_to_tb_options(request, image):
+def get_urls_to_tb_options(request, image, format):
     """
     Returns urls to all the thumbnails user has permission to.
     """
     tb_200_px = None
     tb_400_px = None
     custom_tb = None
-    for thumnail_option in request.user.profile.permission.thumbnail_option.all():
-            if thumnail_option.size == 200:
-                tb_200_px = reverse('thumbnail-url', kwargs={'size': 200, 'image_pk':image.pk},request=request, format=format)
-            if thumnail_option.size == 400:
-                tb_400_px = reverse('thumbnail-url', kwargs={'size': 400, 'image_pk':image.pk},request=request, format=format)
-            if thumnail_option.size != 200 and thumnail_option.size != 400:
-                custom_tb = reverse('thumbnail-url', kwargs={'size': thumnail_option.size, 'image_pk':image.pk},request=request, format=format)    
+    if has_thumbnail_permission(request, 200):
+        tb_200_px = reverse('thumbnail-url', kwargs={'size': 200, 'image_pk':image.pk},request=request, format=format)
+    if has_thumbnail_permission(request, 400):
+        tb_400_px = reverse('thumbnail-url', kwargs={'size': 400, 'image_pk':image.pk},request=request, format=format)
+    if custom_thumnail_permission(request):
+        thumnail_option_size = custom_thumnail_permission(request)
+        custom_tb = reverse('thumbnail-url', kwargs={'size': thumnail_option_size, 'image_pk':image.pk},request=request, format=format)    
     return tb_200_px, tb_400_px, custom_tb
 
-def get_url_to_org_link(request, image):
+def get_url_to_org_link(request, image, format):
     """
     Returns url the original file.
     """
     original_link = None
     if request.user.profile.permission.org_link:
-        original_link = request.build_absolute_uri(image.file.url)
+        original_link = reverse('org-link', kwargs={'image_pk':image.pk},request=request, format=format)
     return original_link
 
-def get_url_to_exp_link(request, image):
+def get_url_to_exp_link(request, image, format):
     """
     Returns url the original file and formatted Datatime instance, 
     with values set to the time image will expire.
@@ -70,7 +75,6 @@ class UserImageView(APIView):
     """
     Images list entrypoint. - `GET` method selects user images from the database. - `POST` adds new image.
     """
-    
     serializer_class = ImageSerializer
     def get(self, request, format=None):
         images = Image.objects.filter(user = request.user)
@@ -82,40 +86,18 @@ class UserImageView(APIView):
         image = Image.objects.create(file=image, user = request.user)
         
         return HttpResponseRedirect(redirect_to=reverse('url-list', kwargs={'image_pk':image.pk}))
-
-    
-@api_view(['GET'])
-def image_preview_view(request, size, image_pk):
-    """
-    Image preview (thumbnail) entrypoint. - `GET` method returns image thumbnail with specific height.
-    """
-    if request.method == 'GET':
-        serializer = ImagePreviewSerializer(data={'size': size}, context = {'request': request})
- 
-        if serializer.is_valid():
-
-            image = get_image_if_owner(request, image_pk)
-            try:
-                resized_image = image.get_thumbnail(size)
-                resized_image = open(resized_image, 'rb')
-            except Exception as e:
-                  raise APIException('Cannot resize image')
-            return FileResponse(resized_image)
-        return Response(serializer.errors, status=status.HTTP_200_OK)
     
 class ImageUrlView(APIView):
     """
-    Images list entrypoint. 
-    - `GET` returns link to original Image file
-    - `POST` creates ExpiringImage instance, with given number of seconds
+    Images list entrypoint. - `GET` returns link to original Image file - `POST` creates ExpiringImage instance, with given number of seconds
     """
     serializer_class = ExpiringImageSerializer
          
     def get(self, request, image_pk, format=None):
         image = get_image_if_owner(request, image_pk)
-        tb_200_px, tb_400_px, custom_tb = get_urls_to_tb_options(request, image)
-        original_link = get_url_to_org_link(request, image)
-        expiration_link, exp_time = get_url_to_exp_link(request, image)
+        tb_200_px, tb_400_px, custom_tb = get_urls_to_tb_options(request, image, format)
+        original_link = get_url_to_org_link(request, image, format)
+        expiration_link, exp_time = get_url_to_exp_link(request, image, format)
         data = {
             "thumbnail that's 200px in height": 
                 tb_200_px,
@@ -149,8 +131,37 @@ class ImageUrlView(APIView):
                     )            
                 return HttpResponseRedirect(redirect_to=reverse('url-list', kwargs={'image_pk':image.pk}))
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-  
+    
+@api_view()
+def image_thumbnail_view(request, size, image_pk, format = None):
+    """
+    Image preview (thumbnail) entrypoint. - `GET` method returns image thumbnail with specific height.
+    """
+    if request.method == 'GET':
+        serializer = ImagePreviewSerializer(data={'size': size}, context = {'request': request})
+ 
+        if serializer.is_valid():
+
+            image = get_image_if_owner(request, image_pk)
+            try:
+                resized_image = image.get_thumbnail(size)
+                resized_image = open(resized_image, 'rb')
+            except Exception as e:
+                  raise APIException('Cannot resize image')
+            return FileResponse(resized_image)
+        return Response(serializer.errors, status=status.HTTP_200_OK)
+    
 @api_view()  
+@permission_classes([HasOriginalLinkPermission])  
+def image_org_link_view(request, image_pk): 
+    """
+    - Returns image file.
+    """
+    image = get_image_if_owner(request, image_pk)
+    return FileResponse(image.file)
+
+@api_view()
+@permission_classes([HasExpirationLinkPermission])  
 def image_exp_link_view(request, image_pk): 
     
     """
@@ -165,3 +176,4 @@ def image_exp_link_view(request, image_pk):
         exp_image.delete()
         return Response(status=status.HTTP_404_NOT_FOUND)
     return FileResponse(exp_image.file)
+

@@ -9,7 +9,7 @@ from rest_framework.fields import CurrentUserDefault
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
-        fields =  ['file']
+        fields =  ['pk','name', 'file']
 
 class ImagePreviewSerializer(serializers.Serializer):
     size = serializers.IntegerField(min_value=0)

@@ -1,3 +1,0 @@
-OrderManagementSystem to aplikacja internetowa mająca na celu zorganizowanie zamówień w jednostce, zawierającej kilka różnych pododdziałów. Użytkownicy muszą zarejestrować się oraz zalogować, bądź dołączyć do istniejącej jednostki za pomocą nazwy oraz klucza (wybierany podczas tworzenia jednostki). 
-Użytkownicy mogą wprowadzać nowe dane, w postaci produktów, kontraktorów oraz kontraktów. Mogą następnie wykonywać zamówienia, oraz aktualizować ich status. Użytkownicy są informowani mailowo o kończących się umowach pół roku przed zakończeniem umowy, co pozwala na przygotowanie umowy dostatecznie wcześcniej. 
-Wszystie wprowadzone rekordy danych umieszczone są w przejrzysty sposób w tabelach, ponadto zaimplementowany został system wyrzukiwania odpowiednich rekordów. 
