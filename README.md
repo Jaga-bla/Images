@@ -10,16 +10,7 @@ Images app is an API that allows specific users to upload an image via HTTP requ
 * Django Rest Framework
 * Pillow Library
 
-## Setup WITH DOCKER
-
-The fastest way to run this project is to use docker-compose tool.
-
-In project directory (where you see `docker-compose.yml`) run commad:
-```shell
-docker-compose up
-```
-
-## Setup NO DOCKER
+## Setup
 
 * In `src/` subdirectory (where you see `Pipfile`) run these commands:
 
