@@ -2,7 +2,7 @@
 
 ## About
 
-Images app is an API that allows specific users to upload an image via HTTP request, and get access to URLs that directs to original image, thumbnail with specific sizes or get expirable link to that image. Permissions are set via Admin panel.
+Images app is an API that allows users to upload an image via HTTP request, and get access to URLs that directs to original image, thumbnail with specific sizes or get expirable link to that image. Permissions are set via Admin panel.
 
 ## Technologies
 
