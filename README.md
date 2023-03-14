@@ -33,7 +33,7 @@ pipenv run python manage.py runserver
 * Go to http://localhost:8000
 
 Credentials to authorize as SuperUser:
-login: admin
-passwors: testing321
+* login: admin
+* passwors: testing321
 
 Password works for any created user (basic_user, premium_user, enterprise_user). 
