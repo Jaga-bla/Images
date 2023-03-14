@@ -84,7 +84,8 @@ class UserImageView(APIView):
         
     def post(self, request, *args, **kwargs):
         image = request.data['file']
-        image = Image.objects.create(file=image, user = request.user)
+        name = request.data['name']
+        image = Image.objects.create(name = name, file=image, user = request.user)
         
         return HttpResponseRedirect(redirect_to=reverse('url-list', kwargs={'image_pk':image.pk}))
     
