@@ -2,7 +2,7 @@
 
 ## About
 
-Images app is an API that allows specific users to upload an image via HTTP request, and get access to URLs that directs to original image, thumbnail with specific sizes or get expirable link to that image. Permissions are set via Admin panel.
+Images app is an API that allows users to upload an image via HTTP request, and get access to URLs that directs to original image, thumbnail with specific sizes or get expirable link to that image. Permissions are set via Admin panel.
 
 ## Technologies
 
@@ -19,10 +19,8 @@ Images app is an API that allows specific users to upload an image via HTTP requ
 pipenv --three install
 
 # run database migrations
+pipenv run python manage.py makemigrations
 pipenv run python manage.py migrate
-
-# create default admin user
-pipenv run python manage.py create_default_superuser --username admin --password admin
 ```
 
 Now, you need to run local development server with
