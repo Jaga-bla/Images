@@ -21,9 +21,6 @@ pipenv --three install
 # run database migrations
 pipenv run python manage.py makemigrations
 pipenv run python manage.py migrate
-
-# create default admin user
-pipenv run python manage.py createsuperuser --username admin --password admin
 ```
 
 Now, you need to run local development server with
