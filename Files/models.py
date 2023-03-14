@@ -7,6 +7,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+
 def get_user_dir_path(instance):
     return '{}/{}/{}'.format(settings.MEDIA_ROOT,'files',instance.user.username)
 
@@ -90,7 +91,6 @@ class Image(models.Model):
         image.close()
         
         return thumbnail_name_with_path
-    
     
 class ExpiringImage(models.Model):
     

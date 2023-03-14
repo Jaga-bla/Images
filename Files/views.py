@@ -138,17 +138,18 @@ def image_thumbnail_view(request, size, image_pk, format = None):
     Image preview (thumbnail) entrypoint. - `GET` method returns image thumbnail with specific height.
     """
     if request.method == 'GET':
-        serializer = ImagePreviewSerializer(data={'size': size}, context = {'request': request})
- 
-        if serializer.is_valid():
+        if has_thumbnail_permission(request, size):
+            serializer = ImagePreviewSerializer(data={'size': size}, context = {'request': request})
+        
+            if serializer.is_valid():
 
-            image = get_image_if_owner(request, image_pk)
-            try:
-                resized_image = image.get_thumbnail(size)
-                resized_image = open(resized_image, 'rb')
-            except Exception as e:
-                  raise APIException('Cannot resize image')
-            return FileResponse(resized_image)
+                image = get_image_if_owner(request, image_pk)
+                try:
+                    resized_image = image.get_thumbnail(size)
+                    resized_image = open(resized_image, 'rb')
+                except Exception as e:
+                    raise APIException('Cannot resize image')
+                return FileResponse(resized_image)
         return Response(serializer.errors, status=status.HTTP_200_OK)
     
 @api_view()  
