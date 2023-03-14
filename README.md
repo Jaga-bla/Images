@@ -6,8 +6,9 @@ Images app is an API that allows users to upload an image via HTTP request, and 
 
 ## Technologies
 
-* Django
-* Django Rest Framework
+* Python 3.10.6
+* Django 4.1.7
+* Django Rest Framework 3.14.0
 * Pillow Library
 
 ## Setup
