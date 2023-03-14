@@ -34,6 +34,6 @@ pipenv run python manage.py runserver
 
 Credentials to authorize as SuperUser:
 * login: admin
-* passwors: testing321
+* password: testing321
 
 Password works for any created user (basic_user, premium_user, enterprise_user). 
