@@ -83,10 +83,13 @@ class UserImageView(APIView):
         return Response(serializer.data)
         
     def post(self, request, *args, **kwargs):
+        serializer = ImageSerializer()
         image = request.data['file']
         name = request.data['name']
-        image = Image.objects.create(name = name, file=image, user = request.user)
-        
+        if image:
+            image = Image.objects.create(name = name, file=image, user = request.user)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST) 
         return HttpResponseRedirect(redirect_to=reverse('url-list', kwargs={'image_pk':image.pk}))
     
 class ImageUrlView(APIView):
@@ -181,4 +184,3 @@ def image_exp_link_view(request, image_pk):
         exp_image.delete()
         return Response(status=status.HTTP_404_NOT_FOUND)
     return FileResponse(exp_image.file)
-

@@ -16,7 +16,7 @@ def get_expiring_dir_path(instance, filename):
 
 def get_image_path(instance, filename):
     username = instance.user.username
-    dirname = '{}/{}/{}/{}/{}'.format(settings.MEDIA_ROOT,'files',username, filename, filename)
+    dirname = '{}/{}/{}/{}'.format(settings.MEDIA_ROOT,'files',username, filename)
     if not os.path.isdir(dirname):
         os.mkdir(dirname)
     return dirname
