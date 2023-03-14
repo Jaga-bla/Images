@@ -1,4 +1,5 @@
 from .models import Image,ExpiringImage
+from rest_framework.exceptions import PermissionDenied
 from .serializers import ImageSerializer, ImagePreviewSerializer, ExpiringImageSerializer
 from rest_framework.response import Response
 from django.http import FileResponse
@@ -137,6 +138,7 @@ def image_thumbnail_view(request, size, image_pk, format = None):
     """
     Image preview (thumbnail) entrypoint. - `GET` method returns image thumbnail with specific height.
     """
+    serializer = ImagePreviewSerializer
     if request.method == 'GET':
         if has_thumbnail_permission(request, size):
             serializer = ImagePreviewSerializer(data={'size': size}, context = {'request': request})
@@ -150,7 +152,8 @@ def image_thumbnail_view(request, size, image_pk, format = None):
                 except Exception as e:
                     raise APIException('Cannot resize image')
                 return FileResponse(resized_image)
-        return Response(serializer.errors, status=status.HTTP_200_OK)
+        raise PermissionDenied("You do not have permission to access this file.")
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view()  
 @permission_classes([HasOriginalLinkPermission])  

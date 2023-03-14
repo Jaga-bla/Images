@@ -5,7 +5,6 @@ from django.conf import settings
 from PIL import Image as Pil_img
 from datetime import timedelta
 
-
 class TestImageModel(TestCase):
     def setUp(self):
         self.test_user = User.objects.create(
