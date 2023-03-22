@@ -13,7 +13,7 @@ Images app is an API that allows users to upload an image via HTTP request, and 
 
 ## Setup
 
-* In `src/` subdirectory (where you see `Pipfile`) run these commands:
+* In `source/` subdirectory (where you see `Pipfile`) run these commands:
 
 ```bash
 # install dependencies
